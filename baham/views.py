@@ -11,9 +11,17 @@ def view_home(request):
 
 def view_vehicles(request):
     template = loader.get_template("vehicles.html")
-    veh = VehicleModel.objects.all().order_by('vendor')
+    veh = VehicleModel.objects.filter(voided=False).order_by('date_created')
     context = {
         "vehicle_list": veh
+    }
+    return HttpResponse(template.render(context, request))
+
+def view_recyclebin(request):
+    template = loader.get_template("vehiclerecyclebin.html")
+    veh = VehicleModel.objects.filter(voided=True).order_by('date_voided')
+    context = {
+        "vehicle_listvoided": veh
     }
     return HttpResponse(template.render(context, request))
 
@@ -59,15 +67,19 @@ def updatevehicle(request):
     newcar = VehicleModel.objects.create(vendor=_vendor, model=_model, type=_type, capacity=_capacity)
     newcar.save()
 
-def deletevehicle(request):
-    _vendor = request.POST.get('vendor')
-    _model = request.POST.get('model')
-    _type = request.POST.get('type')
-    _capacity = request.POST.get('capacity')
+def voidedvehicle(request,id):
+    obj= VehicleModel.objects.get(uuid=id)
+    obj.void()
+    return HttpResponseRedirect(reverse('vehicles'))
 
-    # // validation
+def unvoidedvehicle(request,id):
+    obj= VehicleModel.objects.get(uuid=id)
+    obj.unvoid()
+    return HttpResponseRedirect(reverse('recycleview'))
 
-    newcar = VehicleModel.objects.create(vendor=_vendor, model=_model, type=_type, capacity=_capacity)
-    newcar.save()
+def permanentvehicle(request,id):
+    obj= VehicleModel.objects.get(uuid=id)
+    obj.purge()
+    return HttpResponseRedirect(reverse('recycleview'))
 
 
